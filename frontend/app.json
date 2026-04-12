@@ -1,0 +1,54 @@
+{
+  "expo": {
+    "name": "POT",
+    "slug": "pot-app",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#FAF8F5"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.pot.app",
+      "infoPlist": {
+        "NSPhotoLibraryUsageDescription": "Upload a profile photo",
+        "NSCameraUsageDescription": "Take a profile photo"
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#FF6B4A"
+      },
+      "package": "com.pot.app"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      [
+        "expo-secure-store"
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow POT to access your photos for profile photos."
+        }
+      ],
+      "@react-native-community/datetimepicker",
+      "expo-font"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "your-eas-project-id"
+      }
+    }
+  }
+}

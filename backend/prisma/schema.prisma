@@ -1,0 +1,172 @@
+// This is your Prisma schema file
+// Learn more: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DATABASE_URL")
+}
+
+model User {
+  id              String   @id @default(uuid())
+  email           String   @unique
+  name            String
+  bio             String?
+  photoUrl        String?
+  age             Int?
+  city            String?
+  interests       String[]
+  // New profile fields
+  relationshipStatus String?
+  hasKids         Boolean?
+  wantsKids       Boolean?
+  zodiacSign      String?
+  languages       String[]
+  occupation      String?
+  height          Int?     // in cm
+  lifestyle       String[] // e.g. ["Night owl", "Fitness junkie"]
+  profileComplete Boolean  @default(false)
+  // Reputation
+  reputationScore Float    @default(5.0)
+  attendanceScore Float    @default(5.0)
+  behaviorScore   Float    @default(5.0)
+  completionRate  Float    @default(1.0)
+  groupsJoined    Int      @default(0)
+  groupsCompleted Int      @default(0)
+  // Auth
+  googleId        String?  @unique
+  passwordHash    String?
+  refreshToken    String?
+  fcmToken        String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  memberships     GroupMember[]
+  messages        Message[]
+  ratingsGiven    Rating[]      @relation("RaterRelation")
+  ratingsReceived Rating[]      @relation("RateeRelation")
+  groupsCreated   Group[]
+  // Friendships
+  sentRequests    Friendship[]  @relation("FriendshipRequester")
+  receivedRequests Friendship[] @relation("FriendshipAddressee")
+  // DMs
+  sentDMs         DirectMessage[] @relation("DMSender")
+}
+
+enum FriendshipStatus {
+  PENDING
+  ACCEPTED
+  BLOCKED
+}
+
+model Friendship {
+  id          String           @id @default(uuid())
+  requesterId String
+  addresseeId String
+  status      FriendshipStatus @default(PENDING)
+  // mutual group where they met
+  metAtGroupId String?
+  metAtGroupTitle String?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  requester   User @relation("FriendshipRequester", fields: [requesterId], references: [id], onDelete: Cascade)
+  addressee   User @relation("FriendshipAddressee", fields: [addresseeId], references: [id], onDelete: Cascade)
+
+  @@unique([requesterId, addresseeId])
+}
+
+model DirectMessage {
+  id             String   @id @default(uuid())
+  conversationId String   // composite key: sorted pair of user ids joined by "_"
+  senderId       String
+  receiverId     String
+  content        String
+  read           Boolean  @default(false)
+  createdAt      DateTime @default(now())
+
+  sender         User     @relation("DMSender", fields: [senderId], references: [id], onDelete: Cascade)
+}
+
+
+
+enum GroupStatus {
+  OPEN
+  DISCUSSION
+  FINALIZATION
+  CONFIRMED
+  COMPLETED
+}
+
+model Group {
+  id          String      @id @default(uuid())
+  title       String
+  description String
+  category    String
+  location    String
+  latitude    Float?
+  longitude   Float?
+  maxMembers  Int
+  eventDate   DateTime?
+  status      GroupStatus @default(OPEN)
+  imageUrl    String?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  creatorId String
+  creator   User   @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+
+  members  GroupMember[]
+  messages Message[]
+  ratings  Rating[]
+}
+
+enum MemberStatus {
+  JOINED
+  CONFIRMED
+}
+
+model GroupMember {
+  id       String       @id @default(uuid())
+  groupId  String
+  userId   String
+  status   MemberStatus @default(JOINED)
+  joinedAt DateTime     @default(now())
+
+  group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([groupId, userId])
+}
+
+model Message {
+  id        String   @id @default(uuid())
+  groupId   String
+  senderId  String
+  content   String
+  type      String   @default("text") // "text" | "system"
+  createdAt DateTime @default(now())
+
+  group  Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  sender User  @relation(fields: [senderId], references: [id], onDelete: Cascade)
+}
+
+model Rating {
+  id         String   @id @default(uuid())
+  groupId    String
+  raterId    String
+  rateeId    String
+  attendance Int // 1-5
+  behavior   Int // 1-5
+  createdAt  DateTime @default(now())
+
+  group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  rater User  @relation("RaterRelation", fields: [raterId], references: [id], onDelete: Cascade)
+  ratee User  @relation("RateeRelation", fields: [rateeId], references: [id], onDelete: Cascade)
+
+  @@unique([groupId, raterId, rateeId])
+}
